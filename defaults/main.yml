@@ -1,0 +1,7 @@
+---
+# defaults file for ansible-postgresql
+pg_dot_version: '9.4'
+pg_version: '94'
+pg_user_name: 'default'
+pg_user_password: 'secret'
+pg_db_name: 'default_db'

@@ -1,0 +1,37 @@
+---
+- name: install PostgreSQL dependencies
+  apt: pkg={{item}} state=latest
+  with_items:
+    - python-pycurl
+    - python-psycopg2
+
+- name: add PostgreSQL repo key
+  apt_key: url=https://www.pg_org/media/keys/ACCC4CF8.asc
+
+- name: add PostgreSQL repo
+  apt_repository: repo='deb http://apt.pg_org/pub/repos/apt/ trusty-pgdg main'
+
+- name: install PostgreSQL
+  apt: pkg={{ item }} state=latest update_cache=true
+  with_items:
+    - "postgresql-{{ pg_dot_version }}"
+    - "postgresql-client-{{ pg_dot_version }}"
+    - "postgresql-contrib-{{ pg_dot_version }}"
+    - "postgresql-server-dev-{{ pg_dot_version }}"
+    - libpq-dev
+
+- name: ensure PostgreSQL is running
+  service: name=postgresql state=started
+
+- name: create PostgreSQL user for laravel
+  postgresql_user: name={{ pg_user_name }} password={{ pg_user_password }} login_user=postgres role_attr_flags=CREATEDB,SUPERUSER
+  sudo_user: postgres
+
+- name: create postgresql database for application
+  postgresql_db: name={{ pg_db_name }} owner={{ pg_user_name }} state=present
+  sudo_user: postgres
+
+- name: copy pg_hba config
+  template: src=pg_hba.conf.j2 dest=/etc/postgresql/{{ pg_dot_version }}/main/pg_hba.conf
+  notify:
+    - restart postgresql
